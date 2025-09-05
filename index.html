@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean & Rail Shipment Route</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS for map styling -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha2d1-ZJ6rqucE/T1l3gL8g+u6fA3w4s/iK8vA3eP2vB8S8aWw==" crossorigin="" />
+    <style>
+        body {
+            font-family: 'Inter', 'Montserrat', Arial, sans-serif;
+            background-color: #f3f4f6;
+            color: #222;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            border-radius: 1.25rem;
+            box-shadow: 0 6px 24px rgba(30, 41, 59, 0.10);
+            padding: 2.5rem 1.2rem 2rem 1.2rem;
+            max-width: 900px;
+            margin: 40px auto 0 auto;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        @media (max-width: 700px) {
+            .container {
+                padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+                border-radius: 0.75rem;
+                min-height: 100vh;
+            }
+        }
+        .header-flex {
+            width: 100%;
+            max-width: 1497.600px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(30,41,59,0.10);
+            padding: 24px 24px 20px 24px;
+            margin-bottom: 24px;
+        }
+        .header-logo-wrap {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(90deg, #1F2954 0%, #FF4F46 100%);
+            border-radius: 24px;
+            padding: 16px 0;
+        }
+        @media (max-width: 700px) {
+            .header-logo-wrap {
+                border-radius: 16px;
+                padding: 8px 0;
+            }
+        }
+        .header-logo {
+            width: 390px;
+            max-width: 100%;
+            height: auto;
+            border-radius: 24px;
+            background: transparent;
+            /* box-shadow: 0 6px 24px rgba(30,41,59,0.10); */
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .header-text {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .header-title {
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #FF4F46 0%, #1F2954 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+            margin: 0 0 10px 0;
+            letter-spacing: 1px;
+            text-align: center;
+            line-height: 1.1;
+            text-shadow: 0 2px 8px rgba(31,41,84,0.08);
+        }
+        .header-subtitle {
+            font-family: 'Inter', Arial, sans-serif;
+            color: #334155;
+            font-size: 1.05rem;
+            margin: 0;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            text-align: center;
+            opacity: 0.92;
+            text-shadow: 0 1px 4px rgba(31,41,84,0.06);
+        }
+        @media (max-width: 700px) {
+            .header-flex {
+                padding: 32px 8px 24px 8px;
+                border-radius: 1rem;
+                max-width: 98vw;
+            }
+            .header-logo {
+                width: 390px;
+                max-width: 80vw;
+                border-radius: 16px;
+            }
+            .header-title {
+                font-size: 1.3rem;
+            }
+            .header-subtitle {
+                font-size: 0.85rem;
+            }
+        }
+        .header-divider {
+            width: 100%;
+            border: none;
+            border-top: 2px solid #e5e7eb;
+            margin: 0 0 24px 0;
+        }
+        @media (max-width: 700px) {
+            .header-divider {
+                margin: 0 0 16px 0;
+            }
+        }
+        .main-content-flex {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        @media (max-width: 700px) {
+            .main-content-flex {
+                align-items: center;
+            }
+        }
+        .shipment-details {
+            width: 100%;
+        }
+        .shipment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+        }
+        @media (max-width: 700px) {
+            .shipment-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+        }
+        .shipment-card {
+            background: #e3edfa;
+            padding: 18px 16px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(30,41,59,0.06);
+        }
+        .footer-contact {
+            background: #fff;
+            padding: 16px 0 16px 24px;
+        }
+        @media (max-width: 700px) {
+            .footer-contact {
+                padding: 12px 0 12px 0;
+                text-align: center;
+            }
+        }
+        .footer-contact-img {
+            width: 340px;
+            display: block;
+            margin: 0;
+        }
+        @media (max-width: 700px) {
+            .footer-contact-img {
+                width: 90vw;
+                max-width: 340px;
+                margin: 0 auto;
+            }
+        }
+        #map {
+            height: 60vh;
+            min-height: 400px;
+            width: 100%;
+            border-radius: 0.75rem;
+            border: 1px solid #e5e7eb;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .legend-line {
+            width: 2rem;
+            height: 4px;
+            border-radius: 2px;
+        }
+        /* Custom markers for the map */
+        .leaflet-marker-icon.pol-icon, .leaflet-marker-icon.via-icon, .leaflet-marker-icon.rail-icon, .leaflet-marker-icon.pod-icon {
+            background-color: #1f2937;
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: bold;
+            width: 32px !important;
+            height: 32px !important;
+            line-height: 32px;
+            text-align: center;
+            margin-left: -16px !important;
+            margin-top: -16px !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="container">
+        <!-- Enhanced Header -->
+        <div class="header-flex">
+            <div class="header-logo-wrap">
+                <img src="src/logo-v4.png" alt="World Premium Express Logo" class="header-logo" version="v1">
+            </div>
+            <hr class="header-divider" style="width: 100%; border: none; border-top: 2px solid #e5e7eb; margin: 24px 0;">
+            <div class="header-text">
+                <h1 class="header-title">Global Shipment Routing</h1>
+                <p class="header-subtitle">Visualizing the journey of a container from Thailand to Canada</p>
+            </div>
+        </div>
+
+        <!-- Main Content Left-Aligned -->
+        <div class="main-content-flex">
+            <div id="map" style="margin-bottom: 32px; width: 100%;"></div>
+
+            <div class="shipment-details">
+                <h2 style="font-size: 1.4rem; font-weight: 600; color: #1a2650; margin-bottom: 16px;">Shipment Details</h2>
+                <div class="shipment-grid">
+                    <div class="shipment-card">
+                        <p style="font-weight: 700; color: #2563eb; margin-bottom: 6px;">Port of Loading (POL)</p>
+                        <p style="margin: 0;">Laem Chabang, Thailand</p>
+                    </div>
+                    <div class="shipment-card">
+                        <p style="font-weight: 700; color: #2563eb; margin-bottom: 6px;">Port of Destination (POD)</p>
+                        <p style="margin: 0;">Toronto, Canada</p>
+                    </div>
+                    <div class="shipment-card">
+                        <p style="font-weight: 700; color: #2563eb; margin-bottom: 6px;">Transshipment Port</p>
+                        <p style="margin: 0;">Singapore</p>
+                    </div>
+                    <div class="shipment-card">
+                        <p style="font-weight: 700; color: #2563eb; margin-bottom: 6px;">Rail Freight</p>
+                        <p style="margin: 0;">Halifax, Canada to Toronto, Canada</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 32px; display: flex; gap: 32px; justify-content: center; flex-wrap: wrap;">
+                    <div class="legend-item">
+                        <div class="legend-line" style="background: #3b82f6;"></div>
+                        <span style="font-size: 1rem; color: #2563eb;">Ocean Freight</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line" style="background: #ef4444;"></div>
+                        <span style="font-size: 1rem; color: #ef4444;">Rail Freight</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Footer -->
+        <footer style="background: #1a2650; color: #fff; border-radius: 0 0 1.25rem 1.25rem; margin-top: 48px; overflow: hidden;">
+            <div class="footer-contact">
+                <img src="src/contact.png" alt="Contact Info" class="footer-contact-img">
+            </div>
+            <img src="src/footer-end-v2.png" alt="Footer Graphic" style="width: 100%; display: block; margin: 0;">
+        </footer>
+    </div>
+    
+    <!-- Leaflet JS for map functionality. Using a free, open-source library. -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha2d1-lXp4e6dF4iYJvMv6nFp3M3y2s2/fQ3Zq6t4y6d6d4w4aWq7q4w==" crossorigin=""></script>
+
+    <!-- Custom script for the map logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Define the locations with their coordinates
+            const locations = [
+                { id: 'pol', name: 'Laem Chabang, Thailand', lat: 13.06, lng: 100.88, label: 'POL' },
+                { id: 'via', name: 'Singapore', lat: 1.28, lng: 103.85, label: 'VIA' },
+                { id: 'halifax', name: 'Halifax, Canada', lat: 44.64, lng: -63.57, label: 'RAIL' },
+                { id: 'pod', name: 'Toronto, Canada', lat: 43.65, lng: -79.38, label: 'POD' },
+            ];
+
+            // Initialize the map
+            const map = L.map('map').setView([0, 0], 2);
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            const bounds = [];
+
+            // Add markers for each location
+            locations.forEach(location => {
+                const markerIcon = L.divIcon({
+                    className: `${location.id}-icon`,
+                    html: `<div class="map-marker">${location.label}</div>`,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+
+                const marker = L.marker([location.lat, location.lng], { icon: markerIcon })
+                    .addTo(map)
+                    .bindTooltip(location.name, { permanent: true, direction: 'top' });
+
+                bounds.push([location.lat, location.lng]);
+            });
+
+            // Define the route paths
+            const oceanRoutePath = [
+                [locations[0].lat, locations[0].lng], // Laem Chabang
+                [locations[1].lat, locations[1].lng], // Singapore
+                [locations[2].lat, locations[2].lng], // Halifax
+            ];
+            
+            const railRoutePath = [
+                [locations[2].lat, locations[2].lng], // Halifax
+                [locations[3].lat, locations[3].lng], // Toronto
+            ];
+
+            // Draw the ocean route
+            L.polyline(oceanRoutePath, {
+                color: '#3b82f6',
+                weight: 5,
+                opacity: 0.8
+            }).addTo(map);
+
+            // Draw the rail route with a dashed style
+            L.polyline(railRoutePath, {
+                color: '#ef4444',
+                weight: 5,
+                opacity: 0.8,
+                dashArray: '10, 10'
+            }).addTo(map);
+
+            // Fit the map view to the bounds of the route
+            map.fitBounds(bounds);
+        });
+    </script>
+
+</body>
+</html>
