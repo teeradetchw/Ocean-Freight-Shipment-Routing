@@ -343,20 +343,124 @@
                 [locations[3].lat, locations[3].lng], // Toronto
             ];
 
-            // Draw the ocean route
-            L.polyline(oceanRoutePath, {
+            // Draw the ocean route as a blue polyline
+            const oceanLine = L.polyline(oceanRoutePath, {
                 color: '#3b82f6',
                 weight: 5,
                 opacity: 0.8
             }).addTo(map);
 
+            // Add a moving ship marker along the ocean route
+            const shipIcon = L.divIcon({
+                className: 'ship-icon',
+                html: '<span style="font-size:2rem;">🚢</span>',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+
+            let shipMarker = L.marker(oceanRoutePath[0], { icon: shipIcon }).addTo(map);
+
+            // Animate the ship along the ocean route
+            let progress = 0;
+            const steps = 600;
+            function interpolateCoords(path, t) {
+                // Linear interpolation between waypoints
+                let totalDist = 0;
+                let segDists = [];
+                for (let i = 1; i < path.length; i++) {
+                    const dx = path[i][0] - path[i-1][0];
+                    const dy = path[i][1] - path[i-1][1];
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    segDists.push(dist);
+                    totalDist += dist;
+                }
+                let targetDist = t * totalDist;
+                let accDist = 0;
+                for (let i = 0; i < segDists.length; i++) {
+                    if (accDist + segDists[i] >= targetDist) {
+                        let segT = (targetDist - accDist) / segDists[i];
+                        let lat = path[i][0] + segT * (path[i+1][0] - path[i][0]);
+                        let lng = path[i][1] + segT * (path[i+1][1] - path[i][1]);
+                        return [lat, lng];
+                    }
+                    accDist += segDists[i];
+                }
+                return path[path.length-1];
+            }
+
+            function animateShip() {
+                progress += 1;
+                if (progress > steps) {
+                    progress = steps;
+                    shipArrived = true;
+                }
+                let t = progress / steps;
+                let pos = interpolateCoords(oceanRoutePath, t);
+                shipMarker.setLatLng(pos);
+                if (progress < steps) {
+                    requestAnimationFrame(animateShip);
+                } else {
+                    // Start train animation when ship arrives
+                    animateTrain();
+                }
+            }
+            let shipArrived = false;
+            animateShip();
+
             // Draw the rail route with a dashed style
-            L.polyline(railRoutePath, {
+            const railLine = L.polyline(railRoutePath, {
                 color: '#ef4444',
                 weight: 5,
                 opacity: 0.8,
                 dashArray: '10, 10'
             }).addTo(map);
+
+            // Add a moving train marker along the rail route
+            const trainIcon = L.divIcon({
+                className: 'train-icon',
+                html: '<span style="font-size:2rem;">🚆</span>',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+
+            let trainMarker = L.marker(railRoutePath[0], { icon: trainIcon }).addTo(map);
+
+            // Animate the train along the rail route
+            let trainProgress = 0;
+            const trainSteps = 600;
+            function interpolateTrainCoords(path, t) {
+                // Linear interpolation between waypoints
+                let totalDist = 0;
+                let segDists = [];
+                for (let i = 1; i < path.length; i++) {
+                    const dx = path[i][0] - path[i-1][0];
+                    const dy = path[i][1] - path[i-1][1];
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    segDists.push(dist);
+                    totalDist += dist;
+                }
+                let targetDist = t * totalDist;
+                let accDist = 0;
+                for (let i = 0; i < segDists.length; i++) {
+                    if (accDist + segDists[i] >= targetDist) {
+                        let segT = (targetDist - accDist) / segDists[i];
+                        let lat = path[i][0] + segT * (path[i+1][0] - path[i][0]);
+                        let lng = path[i][1] + segT * (path[i+1][1] - path[i][1]);
+                        return [lat, lng];
+                    }
+                    accDist += segDists[i];
+                }
+                return path[path.length-1];
+            }
+
+            function animateTrain() {
+                trainProgress += 1;
+                if (trainProgress > trainSteps) trainProgress = 0;
+                let t = trainProgress / trainSteps;
+                let pos = interpolateTrainCoords(railRoutePath, t);
+                trainMarker.setLatLng(pos);
+                requestAnimationFrame(animateTrain);
+            }
 
             // Fit the map view to the bounds of the route
             map.fitBounds(bounds);
