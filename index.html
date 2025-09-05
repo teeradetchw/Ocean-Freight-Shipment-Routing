@@ -353,9 +353,9 @@
             // Add a moving ship marker along the ocean route
             const shipIcon = L.divIcon({
                 className: 'ship-icon',
-                html: '<span style="font-size:2rem;">🚢</span>',
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
+                html: '<img src="src/cargo-ship.png" alt="Ship" style="width:48px;height:48px;">',
+                iconSize: [48, 48],
+                iconAnchor: [24, 32] // anchor at bottom center for above-the-line effect
             });
 
             let shipMarker = L.marker(oceanRoutePath[0], { icon: shipIcon }).addTo(map);
@@ -418,9 +418,9 @@
             // Add a moving train marker along the rail route
             const trainIcon = L.divIcon({
                 className: 'train-icon',
-                html: '<span style="font-size:2rem;">🚆</span>',
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
+                html: '<img src="src/train.png" alt="Train" style="width:48px;height:48px;">',
+                iconSize: [48, 48],
+                iconAnchor: [24, 32]
             });
 
             let trainMarker = L.marker(railRoutePath[0], { icon: trainIcon }).addTo(map);
@@ -455,7 +455,15 @@
 
             function animateTrain() {
                 trainProgress += 1;
-                if (trainProgress > trainSteps) trainProgress = 0;
+                if (trainProgress > trainSteps) {
+                    // Reset both ship and train to start positions and restart animation
+                    trainProgress = 0;
+                    progress = 0;
+                    shipMarker.setLatLng(oceanRoutePath[0]);
+                    trainMarker.setLatLng(railRoutePath[0]);
+                    animateShip();
+                    return;
+                }
                 let t = trainProgress / trainSteps;
                 let pos = interpolateTrainCoords(railRoutePath, t);
                 trainMarker.setLatLng(pos);
